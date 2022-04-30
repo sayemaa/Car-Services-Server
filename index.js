@@ -3,6 +3,7 @@ const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const app = express();
 const port = process.env.PORT || 5000;
+
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 require('dotenv').config();
@@ -19,11 +20,11 @@ function verifyJWT(req, res, next) {
     const token = authHeader.split(' ')[1];
     jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
         if (err) {
-            return res.status(403).send({ message: 'Forbidden Access' });
+            return res.status(403).send({ message: 'Forbidden access' });
         }
         console.log('decoded', decoded);
         req.decoded = decoded;
-        next()
+        next();
     })
 }
 
@@ -37,37 +38,36 @@ async function run() {
         const orderCollection = client.db('geniusCar').collection('order');
 
         // AUTH
-
         app.post('/login', async (req, res) => {
             const user = req.body;
             const accessToken = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
                 expiresIn: '1d'
             });
-            res.send({ accessToken })
+            res.send({ accessToken });
         })
 
-        // Services API
-
+        // SERVICES API
         app.get('/service', async (req, res) => {
             const query = {};
             const cursor = serviceCollection.find(query);
             const services = await cursor.toArray();
             res.send(services);
-        })
+        });
 
         app.get('/service/:id', async (req, res) => {
             const id = req.params.id;
+            console.log(id);
             const query = { _id: ObjectId(id) };
             const service = await serviceCollection.findOne(query);
             res.send(service);
-        })
+        });
 
         // POST
         app.post('/service', async (req, res) => {
             const newService = req.body;
             const result = await serviceCollection.insertOne(newService);
             res.send(result);
-        })
+        });
 
         // DELETE
         app.delete('/service/:id', async (req, res) => {
@@ -82,7 +82,6 @@ async function run() {
         app.get('/order', verifyJWT, async (req, res) => {
             const decodedEmail = req.decoded.email;
             const email = req.query.email;
-            // console.log(email)
             if (email === decodedEmail) {
                 const query = { email: email };
                 const cursor = orderCollection.find(query);
@@ -90,8 +89,7 @@ async function run() {
                 res.send(orders);
             }
             else {
-                return res.status(403).send({ message: 'Forbidden Access' });
-
+                res.status(403).send({ message: 'forbidden access' })
             }
         })
 
@@ -100,9 +98,10 @@ async function run() {
             const result = await orderCollection.insertOne(order);
             res.send(result);
         })
+
     }
     finally {
-        res.send
+
     }
 }
 
